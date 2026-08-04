@@ -1,0 +1,27 @@
+{{
+    config(
+        materialized = "view",
+        database = "ecom_db",
+        schema = "marts"
+    )
+}}
+
+WITH CUSTOMER_LAST_LOGIN
+AS
+(
+SELECT
+    CUSTOMER_ID,
+    LOGIN_DATE,
+    LAG(LOGIN_DATE) OVER(PARTITION BY CUSTOMER_ID ORDER BY LOGIN_DATE) AS LAST_LOGIN
+FROM {{source("raw", "customer_login")}}
+)
+SELECT
+    *,
+    DATEDIFF(DAY, LAST_LOGIN, LOGIN_DATE) AS DAYS_BTW_LOGINS,
+    CASE
+        WHEN DAYS_BTW_LOGINS = 1 THEN 'CONSECUTIVE'
+        WHEN DAYS_BTW_LOGINS IS NULL THEN 'FIRST_DAY'
+        ELSE 'NOT CONSECUTIVE'
+    END AS CHK_CONSECUTIVE
+FROM CUSTOMER_LAST_LOGIN
+WHERE CHK_CONSECUTIVE = 'CONSECUTIVE'
