@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw
+    database: ecom_db
+    schema: int
+    tables:
+      - name: customer_login
+
